@@ -18,6 +18,7 @@ exports.login = async (req, res, next) => {
   }
 };
 
+//забув пароль
 exports.forgotPassword = async (req, res) => {
   const { username } = req.body;
   const user = await User.findOne({ username });
@@ -30,7 +31,7 @@ exports.forgotPassword = async (req, res) => {
   res.json({ message: "Use this token to reset password", resetToken });
 };
 
-//Скидання пароля
+//скидання пароля
 exports.resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
 
