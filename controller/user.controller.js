@@ -1,4 +1,5 @@
 const userService = require("../services/UserService");
+const redisClient = require("../config/redis");
 
 exports.getAllUsers = async (req, res, next) => {
   try {
@@ -10,11 +11,24 @@ exports.getAllUsers = async (req, res, next) => {
 };
 
 exports.getUserById = async (req, res, next) => {
+  const userId = req.params.id;
+
   try {
-    const user = await userService.getUserById(req.params.id);
+    // Перевіряємо кеш
+    const cachedUser = await redisClient.get(`user:${userId}`);
+    if (cachedUser) {
+      return res.json(JSON.parse(cachedUser));
+    }
+
+    // Якщо в кеші немає — шукаємо в базі
+    const user = await userService.getUserById(userId);
     if (!user) {
       return res.status(404).json({ error: "User was not found" });
     }
+
+    // Зберігаємо в Redis (наприклад на 1 годину — 3600 секунд)
+    await redisClient.setEx(`user:${userId}`, 3600, JSON.stringify(user));
+
     res.json(user);
   } catch (error) {
     next(error);
